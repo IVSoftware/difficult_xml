@@ -16,6 +16,10 @@ namespace difficult_xml
             PerceptionSkills, 
             FortitudeSkills,
         }
+
+        /// <summary>
+        /// Class to hold a skill
+        /// </summary>
         class Skill
         {
             public Skill(SkillsType type, XElement xel)
@@ -29,7 +33,7 @@ namespace difficult_xml
                         case nameof(skillLevel): skillLevel = (int)property; break;
                         case nameof(accuracyLevel): accuracyLevel = (int)property; break;
                         case nameof(damageLevel): damageLevel = (int)property; break;
-                        case nameof(staminaLevel): skillKey = (int)property; break;
+                        case nameof(staminaLevel): staminaLevel = (int)property; break;
                         case nameof(chanceLevel): chanceLevel = (int)property; break;
                     } 
                 }
@@ -41,17 +45,38 @@ namespace difficult_xml
             public int damageLevel { get; set; }
             public int staminaLevel { get; set; }
             public int chanceLevel { get; set; }
+            public override string ToString()
+            {
+                List<string> builder = new List<string>();
+                builder.Add($"\t{SkillsType}");
+                builder.Add($"\t\t{nameof(skillKey)}:{skillKey}");
+                builder.Add($"\t\t{nameof(skillLevel)}:{skillLevel}");
+                builder.Add($"\t\t{nameof(accuracyLevel)}:{accuracyLevel}");
+                builder.Add($"\t\t{nameof(damageLevel)}:{damageLevel}");
+                builder.Add($"\t\t{nameof(staminaLevel)}:{staminaLevel}");
+                builder.Add($"\t\t{nameof(chanceLevel)}:{chanceLevel}");
+                return string.Join(Environment.NewLine, builder);
+            }
         }
+
+        /// <summary>
+        /// Parser routine
+        /// </summary>
         static void Main(string[] args)
         {
             Dictionary<string, List<Skill>> skillsByUser = new Dictionary<string, List<Skill>>();
 
+            // Read in the source
             var xdoc = XDocument.Parse(source);
+            // Get the Profession element...
             var profession = xdoc.Element("Profession");
+            // ... and go through the skills it contains
             foreach (SkillsType skillsType in Enum.GetValues(typeof(SkillsType)))
             {
-                var group = profession.Element(skillsType.ToString());
+                var group = profession.Element(skillsType.ToString()); // Top element
                 group = (XElement)group.Elements().First(); // Burn this unused element.
+
+                // Here's where I assume these are users i0, i1 etc. but you tell me.
                 foreach (var user in group.Elements())
                 {
                     if(!skillsByUser.ContainsKey(user.Name.LocalName))
@@ -59,6 +84,17 @@ namespace difficult_xml
                         skillsByUser[user.Name.LocalName] = new List<Skill>();
                     }
                     skillsByUser[user.Name.LocalName].Add(new Skill(skillsType, user));
+                }
+            }
+
+            // Print out the dictionary that this made.
+            foreach (var key in skillsByUser.Keys)
+            {
+                var list = skillsByUser[key];
+                Console.WriteLine($"User: {key}");
+                foreach (var skill in list)
+                {
+                    Console.WriteLine(skill.ToString());
                 }
             }
         }
